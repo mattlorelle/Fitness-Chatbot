@@ -1,112 +1,88 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
-import React from 'react';
-import type {Node} from 'react';
+import React, {Component} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
   Text,
-  useColorScheme,
   View,
+  Button,
+  TouchableOpacity,
+  StyleSheet
 } from 'react-native';
+import Tts from 'react-native-tts';
+import Voice, {
+  SpeechRecognizedEvent,
+  SpeechResultsEvent
+} from '@react-native-voice/voice';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+class App extends Component {
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+  state = {
+    lastInput: '',
+    lastOutput: ''
+  }
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  constructor(props) {
+    super(props);
+    Voice.onSpeechResults = this.onSpeechResults;
+  }
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  onSpeech = async () => {
+    // begin listening
+    this.setState({lastInput:''});
+    try {
+      await Voice.start('en-US');
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+  onSpeechEnd = async () => {
+    // give a response
+    try {
+      await Voice.stop();
+    } catch (error) {
+      console.error(error);
+    }
+    str = "input was " + this.state.lastInput;
+    Tts.speak(str);
+  };
+
+  onSpeechResults = (e) => {
+    this.setState({
+      lastInput: e.value,
+    });
+  };
+
+  render(){
+    return (
+      <View 
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={this.onSpeech}
+        >
+          <Text>Press here to speak.</Text> 
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={this.onSpeechEnd}
+        >
+          <Text>Press here to get a response.</Text> 
+        </TouchableOpacity>
+      </View> 
+    )
+  };
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  button: {
+    alignItems: "center",
+    backgroundColor: "#DDDDDD",
+    padding: 10
+  }
 });
 
 export default App;
