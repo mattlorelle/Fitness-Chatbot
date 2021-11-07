@@ -16,7 +16,10 @@ class App extends Component {
 
   state = {
     lastInput: '',
-    lastOutput: ''
+    lastOutput: '',
+    sessId:  1,
+    projId: 'sds-project-agent-xywc',
+    langCode: 'en-US'
   }
 
   constructor(props) {
@@ -24,9 +27,39 @@ class App extends Component {
     Voice.onSpeechResults = this.onSpeechResults;
   }
 
+  getResponse = async (query) => {
+    const ACCESS_TOKEN = 'G0CSPX-lxqmZUj0RkZ8d0taIChqqN_jQEqr'
+    const url = 'https://dialogflow.googleapis.com/v2/projects/'+this.state.projId+'agent/sessions/'+this.state.sessId+':detectIntent'
+    const req = {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': `Bearer ${ACCESS_TOKEN}`
+      },
+      body : JSON.stringify({
+        queryInput: {
+          text: {
+            text: query,
+            languageCode: this.state.langCode,
+          },
+        },
+      })
+    };
+
+    try {
+      const response = await fetch(url, req);
+      let responseJson = await response.json();
+      this.state.sessId += 1;
+      return responseJson.queryResult.queryText;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   onSpeech = async () => {
     // begin listening
-    this.setState({lastInput:''});
+    this.state.lastInput = '';
     try {
       await Voice.start('en-US');
     } catch (error) {
@@ -38,17 +71,16 @@ class App extends Component {
     // give a response
     try {
       await Voice.stop();
+
+      const response = await this.getResponse(this.state.lastInput);
     } catch (error) {
       console.error(error);
     }
-    str = "input was " + this.state.lastInput;
-    Tts.speak(str);
+    Tts.speak(response);
   };
 
   onSpeechResults = (e) => {
-    this.setState({
-      lastInput: e.value,
-    });
+    this.state.lastInput = e.value;
   };
 
   render(){

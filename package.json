@@ -10,6 +10,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@google-cloud/dialogflow": "^4.5.0",
     "@react-native-voice/voice": "^3.2.2",
     "react": "17.0.2",
     "react-native": "0.66.2",
