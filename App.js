@@ -11,6 +11,9 @@ import Voice, {
   SpeechRecognizedEvent,
   SpeechResultsEvent
 } from '@react-native-voice/voice';
+import { Dialogflow_V2 } from 'react-native-dialogflow';
+var secrets = require('./secrets/sds-project-agent-xywc-6538f49e0789.json');
+
 
 class App extends Component {
 
@@ -22,6 +25,12 @@ class App extends Component {
     langCode: 'en-US'
   }
 
+<<<<<<< HEAD
+=======
+  private_key = secrets.private_key;
+  client_email = secrets.client_email;
+
+>>>>>>> 7b29699 (Removed plaintext secrets)
   constructor(props) {
     super(props);
     Voice.onSpeechResults = this.onSpeechResults;
