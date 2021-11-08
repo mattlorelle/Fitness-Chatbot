@@ -25,50 +25,36 @@ class App extends Component {
     langCode: 'en-US'
   }
 
-<<<<<<< HEAD
-=======
   private_key = secrets.private_key;
   client_email = secrets.client_email;
 
->>>>>>> 7b29699 (Removed plaintext secrets)
   constructor(props) {
     super(props);
     Voice.onSpeechResults = this.onSpeechResults;
+
+    Dialogflow_V2.setConfiguration(
+      this.client_email,
+      this.private_key,
+      Dialogflow_V2.LANG_ENGLISH_US,
+      this.state.projId
+    );
+
+    Tts.setDefaultVoice("com.apple.ttsbundle.siri_male_en-US_compact");
+    Tts.setDefaultRate(0.55);
   }
 
-  getResponse = async (query) => {
-    const ACCESS_TOKEN = 'G0CSPX-lxqmZUj0RkZ8d0taIChqqN_jQEqr'
-    const url = 'https://dialogflow.googleapis.com/v2/projects/'+this.state.projId+'agent/sessions/'+this.state.sessId+':detectIntent'
-    const req = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': `Bearer ${ACCESS_TOKEN}`
-      },
-      body : JSON.stringify({
-        queryInput: {
-          text: {
-            text: query,
-            languageCode: this.state.langCode,
-          },
-        },
-      })
-    };
-
-    try {
-      const response = await fetch(url, req);
-      let responseJson = await response.json();
-      this.state.sessId += 1;
-      return responseJson.queryResult.queryText;
-    } catch (err) {
-      console.error(err);
-    }
-  }
+  resultHandler = (result) => {
+    this.setState({
+        lastOutput: result.queryResult.fulfillmentText,
+    });
+    Tts.speak(this.state.lastOutput);
+  };
 
   onSpeech = async () => {
     // begin listening
-    this.state.lastInput = '';
+    this.setState({
+      lastInput: '',
+    });
     try {
       await Voice.start('en-US');
     } catch (error) {
@@ -81,15 +67,17 @@ class App extends Component {
     try {
       await Voice.stop();
 
-      const response = await this.getResponse(this.state.lastInput);
+      let str = this.state.lastInput;
+      await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
     } catch (error) {
       console.error(error);
     }
-    Tts.speak(response);
   };
 
   onSpeechResults = (e) => {
-    this.state.lastInput = e.value;
+    this.setState({
+      lastInput: e.value,
+    });
   };
 
   render(){
