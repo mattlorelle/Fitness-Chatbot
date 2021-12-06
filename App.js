@@ -1,22 +1,24 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { GiftedChat } from 'react-native-gifted-chat';
+import { StyleSheet, Text, View,  TouchableOpacity, Touchable, Button } from 'react-native';
+import { GiftedChat, Composer } from 'react-native-gifted-chat';
 import { Dialogflow_V2 } from 'react-native-dialogflow';
+import Voice, { SpeechRecognizedEvent, SpeechResultsEvent } from '@react-native-voice/voice';
 
 import { dialogflowConfig } from './env';
 
 const BOT_USER = {
   _id: 2,
-  name: 'FAQ Bot',
-  avatar: 'https://i.imgur.com/7k12EPD.png'
+  name: 'Fitness Bot',
+  avatar: {uri: 'jerry.png'}
 };
 
 class App extends Component {
+
   state = {
     messages: [
       {
         _id: 1,
-        text: `Hi! I am the FAQ bot 🤖 from Jscrambler.\n\nHow may I help you with today?`,
+        text: `Hi. I am Jerry, your personal fitness assistant. Ask me to recommend an exercise!`,
         createdAt: new Date(),
         user: BOT_USER
       }
@@ -63,10 +65,57 @@ class App extends Component {
     }));
   }
 
+  onSpeech = async () => {
+    // begin listening
+    this.setState({
+      lastInput: '',
+    });
+    try {
+      await Voice.start('en-US');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  onSpeechEnd = async () => {
+    // give a response
+    try {
+      await Voice.stop();
+
+      let str = this.state.lastInput;
+      await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  onSpeechResults = (e) => {
+    this.setState({
+      lastInput: e.value,
+    });
+  };
+
+  renderComposer = (props) => {
+    // Adds a Mic Button in the text box, you can style it as you want
+    return (
+      <View style={{ flexDirection: 'row' }}>
+       <Composer {...props} />
+       <TouchableOpacity
+          style={styles.button}
+          onPressIn={this.onSpeech}
+          onPressOut={this.onSpeechEnd}
+        >
+          <Text>Voice</Text> 
+        </TouchableOpacity>
+      </View>
+     )
+  }
+
   render() {
     return (
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
         <GiftedChat
+          renderComposer = {this.renderComposer}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
           user={{
@@ -77,5 +126,13 @@ class App extends Component {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: "center",
+    backgroundColor: "#DDDDDD",
+    padding: 10
+  }
+});
 
 export default App;
