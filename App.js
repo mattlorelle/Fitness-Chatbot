@@ -91,15 +91,10 @@ class App extends Component {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={this.onSpeech}
+          onPressIn={this.onSpeech}
+          onPressOut={this.onSpeechEnd}
         >
-          <Text>Press here to speak.</Text> 
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={this.onSpeechEnd}
-        >
-          <Text>Press here to get a response.</Text> 
+          <Text>Hold here to speak.</Text> 
         </TouchableOpacity>
       </View> 
     )
