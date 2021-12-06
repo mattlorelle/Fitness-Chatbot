@@ -48,6 +48,7 @@ class App extends Component {
   }
 
   handleGoogleResponse(result) {
+    console.warn(result);
     let text = result.queryResult.fulfillmentMessages[0].text.text[0];
     this.sendBotResponse(text);
   }
@@ -94,6 +95,15 @@ class App extends Component {
     }
   };
 
+  onVocalSend(messages = []){
+    let msg = messages[0].text
+    Dialogflow_V2.requestQuery(
+      String(msg),
+      result => this.handleGoogleResponse(result),
+      error => console.error(error)
+    );
+  }
+
   onSpeechEnd = async () => {
     // give a response
     try {
@@ -109,7 +119,10 @@ class App extends Component {
       };
 
       // await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
-      this.onSend([msg]);
+      this.setState(previousState => ({
+        messages: GiftedChat.append(previousState.messages, [msg])
+      }));
+      this.onVocalSend(this.state.messages);
     } catch (error) {
       console.error(error);
     }
