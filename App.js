@@ -1,15 +1,16 @@
 import React, { Component } from 'react';
-import { StyleSheet, Text, View,  TouchableOpacity, Touchable, Button } from 'react-native';
+import { StyleSheet, Text, View,  TouchableOpacity} from 'react-native';
 import { GiftedChat, Composer } from 'react-native-gifted-chat';
 import { Dialogflow_V2 } from 'react-native-dialogflow';
-import Voice, { SpeechRecognizedEvent, SpeechResultsEvent } from '@react-native-voice/voice';
+import Voice from '@react-native-voice/voice';
+import Icon from 'react-native-vector-icons/Ionicons';
+
 
 import { dialogflowConfig } from './env';
 
 const BOT_USER = {
   _id: 2,
-  name: 'Fitness Bot',
-  avatar: {uri: 'jerry.png'}
+  name: 'Jerry',
 };
 
 class App extends Component {
@@ -96,24 +97,26 @@ class App extends Component {
   };
 
   renderComposer = (props) => {
+    
     // Adds a Mic Button in the text box, you can style it as you want
     return (
-      <View style={{ flexDirection: 'row' }}>
-       <Composer {...props} />
-       <TouchableOpacity
+      <View style={{ flexDirection: 'row', width: '85%'}}>
+        <TouchableOpacity
+          width = '100%'
           style={styles.button}
           onPressIn={this.onSpeech}
           onPressOut={this.onSpeechEnd}
         >
-          <Text>Voice</Text> 
-        </TouchableOpacity>
-      </View>
+          <Icon name='mic-outline' size={24}/>
+        </TouchableOpacity>        
+        <Composer {...props}/>
+      </View>      
      )
   }
 
   render() {
     return (
-      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={{flex: 1, backgroundColor: '#333333'}}>
         <GiftedChat
           renderComposer = {this.renderComposer}
           messages={this.state.messages}
