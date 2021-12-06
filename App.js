@@ -1,112 +1,81 @@
-import React, {Component} from 'react';
-import {
-  Text,
-  View,
-  Button,
-  TouchableOpacity,
-  StyleSheet
-} from 'react-native';
-import Tts from 'react-native-tts';
-import Voice, {
-  SpeechRecognizedEvent,
-  SpeechResultsEvent
-} from '@react-native-voice/voice';
+import React, { Component } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { GiftedChat } from 'react-native-gifted-chat';
 import { Dialogflow_V2 } from 'react-native-dialogflow';
-var secrets = require('./secrets/sds-project-agent-xywc-6538f49e0789.json');
 
+import { dialogflowConfig } from './env';
+
+const BOT_USER = {
+  _id: 2,
+  name: 'FAQ Bot',
+  avatar: 'https://i.imgur.com/7k12EPD.png'
+};
 
 class App extends Component {
-
   state = {
-    lastInput: '',
-    lastOutput: '',
-    sessId:  1,
-    projId: 'sds-project-agent-xywc',
-    langCode: 'en-US'
-  }
+    messages: [
+      {
+        _id: 1,
+        text: `Hi! I am the FAQ bot 🤖 from Jscrambler.\n\nHow may I help you with today?`,
+        createdAt: new Date(),
+        user: BOT_USER
+      }
+    ]
+  };
 
-  private_key = secrets.private_key;
-  client_email = secrets.client_email;
-
-  constructor(props) {
-    super(props);
-    Voice.onSpeechResults = this.onSpeechResults;
-
+  componentDidMount() {
     Dialogflow_V2.setConfiguration(
-      this.client_email,
-      this.private_key,
+      dialogflowConfig.client_email,
+      dialogflowConfig.private_key,
       Dialogflow_V2.LANG_ENGLISH_US,
-      this.state.projId
+      dialogflowConfig.project_id
     );
-
-    Tts.setDefaultVoice("com.apple.ttsbundle.siri_male_en-US_compact");
-    Tts.setDefaultRate(0.55);
   }
 
-  resultHandler = (result) => {
-    this.setState({
-        lastOutput: result.queryResult.fulfillmentText,
-    });
-    Tts.speak(this.state.lastOutput);
-  };
+  handleGoogleResponse(result) {
+    let text = result.queryResult.fulfillmentMessages[0].text.text[0];
+    this.sendBotResponse(text);
+  }
 
-  onSpeech = async () => {
-    // begin listening
-    this.setState({
-      lastInput: '',
-    });
-    try {
-      await Voice.start('en-US');
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  onSend(messages = []) {
+    this.setState(previousState => ({
+      messages: GiftedChat.append(previousState.messages, messages)
+    }));
 
-  onSpeechEnd = async () => {
-    // give a response
-    try {
-      await Voice.stop();
+    let message = messages[0].text;
+    Dialogflow_V2.requestQuery(
+      message,
+      result => this.handleGoogleResponse(result),
+      error => console.log(error)
+    );
+  }
 
-      let str = this.state.lastInput;
-      await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  sendBotResponse(text) {
+    let msg = {
+      _id: this.state.messages.length + 1,
+      text,
+      createdAt: new Date(),
+      user: BOT_USER
+    };
 
-  onSpeechResults = (e) => {
-    this.setState({
-      lastInput: e.value,
-    });
-  };
+    this.setState(previousState => ({
+      messages: GiftedChat.append(previousState.messages, [msg])
+    }));
+  }
 
-  render(){
+  render() {
     return (
-      <View 
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPressIn={this.onSpeech}
-          onPressOut={this.onSpeechEnd}
-        >
-          <Text>Hold here to speak.</Text> 
-        </TouchableOpacity>
-      </View> 
-    )
-  };
-}
-
-const styles = StyleSheet.create({
-  button: {
-    alignItems: "center",
-    backgroundColor: "#DDDDDD",
-    padding: 10
+      <View style={{ flex: 1, backgroundColor: '#fff' }}>
+        <GiftedChat
+          messages={this.state.messages}
+          onSend={messages => this.onSend(messages)}
+          user={{
+            _id: 1
+          }}
+        />
+      </View>
+    );
   }
-});
+}
 
 export default App;
