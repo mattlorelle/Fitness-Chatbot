@@ -4,8 +4,6 @@ import { GiftedChat, Composer } from 'react-native-gifted-chat';
 import { Dialogflow_V2 } from 'react-native-dialogflow';
 import Voice from '@react-native-voice/voice';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-
 import { dialogflowConfig } from './env';
 import Tts from 'react-native-tts';
 
@@ -131,7 +129,7 @@ class App extends Component {
           onPressIn={this.onSpeech}
           onPressOut={this.onSpeechEnd}
         >
-          <Icon name='mic-outline' size={24}/>
+          <Icon name='mic-outline' size={24} alignItems='center'/>
         </TouchableOpacity>        
         <Composer {...props}/>
       </View>      
@@ -140,7 +138,7 @@ class App extends Component {
 
   render() {
     return (
-      <View style={{flex: 1, backgroundColor: '#333333'}}>
+      <View style={{flex: 1, backgroundColor: '#ffffff'}}>
         <GiftedChat
           renderComposer = {this.renderComposer}
           messages={this.state.messages}
@@ -157,7 +155,7 @@ class App extends Component {
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    backgroundColor: "#DDDDDD",
+    backgroundColor: "#ffffff",
     padding: 10
   }
 });
