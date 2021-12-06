@@ -7,10 +7,16 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 
 import { dialogflowConfig } from './env';
+import Tts from 'react-native-tts';
 
 const BOT_USER = {
   _id: 2,
   name: 'Jerry',
+};
+
+const USER = {
+  _id: 1,
+  name: 'User',
 };
 
 class App extends Component {
@@ -23,7 +29,9 @@ class App extends Component {
         createdAt: new Date(),
         user: BOT_USER
       }
-    ]
+    ],
+    lastInput: '',
+    lastOutput: ''
   };
 
   componentDidMount() {
@@ -33,6 +41,10 @@ class App extends Component {
       Dialogflow_V2.LANG_ENGLISH_US,
       dialogflowConfig.project_id
     );
+
+    Voice.onSpeechResults = this.onSpeechResults;
+    Tts.setDefaultVoice("com.apple.ttsbundle.siri_male_en-US_compact");
+    Tts.setDefaultRate(0.525);
   }
 
   handleGoogleResponse(result) {
@@ -46,6 +58,8 @@ class App extends Component {
     }));
 
     let message = messages[0].text;
+
+
     Dialogflow_V2.requestQuery(
       message,
       result => this.handleGoogleResponse(result),
@@ -60,6 +74,8 @@ class App extends Component {
       createdAt: new Date(),
       user: BOT_USER
     };
+
+    Tts.speak(text);
 
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, [msg])
@@ -83,8 +99,17 @@ class App extends Component {
     try {
       await Voice.stop();
 
-      let str = this.state.lastInput;
-      await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
+      let text = this.state.lastInput;
+
+      let msg = {
+        _id: this.state.messages.length + 1,
+        text,
+        createdAt: new Date(),
+        user: USER
+      };
+
+      // await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
+      this.onSend([msg]);
     } catch (error) {
       console.error(error);
     }
