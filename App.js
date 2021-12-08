@@ -1,54 +1,84 @@
-import React, {Component} from 'react';
-import {
-  Text,
-  View,
-  Button,
-  TouchableOpacity,
-  StyleSheet
-} from 'react-native';
-import Tts from 'react-native-tts';
-import Voice, {
-  SpeechRecognizedEvent,
-  SpeechResultsEvent
-} from '@react-native-voice/voice';
+import React, { Component } from 'react';
+import { StyleSheet, Text, View,  TouchableOpacity} from 'react-native';
+import { GiftedChat, Composer } from 'react-native-gifted-chat';
 import { Dialogflow_V2 } from 'react-native-dialogflow';
-var secrets = require('./secrets/sds-project-agent-xywc-6538f49e0789.json');
+import Voice from '@react-native-voice/voice';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { dialogflowConfig } from './env';
+import Tts from 'react-native-tts';
 
+const BOT_USER = {
+  _id: 2,
+  name: 'Jerry',
+};
+
+const USER = {
+  _id: 1,
+  name: 'User',
+};
 
 class App extends Component {
 
   state = {
+    messages: [
+      {
+        _id: 1,
+        text: `Hello I'm Jerry, your personal fitness assistant. Press and hold the microphone button below to ask for workout suggestions!`,
+        createdAt: new Date(),
+        user: BOT_USER
+      }
+    ],
     lastInput: '',
-    lastOutput: '',
-    sessId:  1,
-    projId: 'sds-project-agent-xywc',
-    langCode: 'en-US'
-  }
+    lastOutput: ''
+  };
 
-  private_key = secrets.private_key;
-  client_email = secrets.client_email;
-
-  constructor(props) {
-    super(props);
-    Voice.onSpeechResults = this.onSpeechResults;
-
+  componentDidMount() {
     Dialogflow_V2.setConfiguration(
-      this.client_email,
-      this.private_key,
+      dialogflowConfig.client_email,
+      dialogflowConfig.private_key,
       Dialogflow_V2.LANG_ENGLISH_US,
-      this.state.projId
+      dialogflowConfig.project_id
     );
 
+    Voice.onSpeechResults = this.onSpeechResults;
     Tts.setDefaultVoice("com.apple.ttsbundle.siri_male_en-US_compact");
-    Tts.setDefaultRate(0.55);
+    Tts.setDefaultRate(0.525);
   }
 
-  resultHandler = (result) => {
-    this.setState({
-        lastOutput: result.queryResult.fulfillmentText,
-    });
-    Tts.speak(this.state.lastOutput);
-  };
+  handleGoogleResponse(result) {
+    console.warn(result);
+    let text = result.queryResult.fulfillmentMessages[0].text.text[0];
+    this.sendBotResponse(text);
+  }
+
+  onSend(messages = []) {
+    this.setState(previousState => ({
+      messages: GiftedChat.append(previousState.messages, messages)
+    }));
+
+    let message = messages[0].text;
+
+    Dialogflow_V2.requestQuery(
+      String(message),
+      result => this.handleGoogleResponse(result),
+      error => console.log(error)
+    );
+  }
+
+  sendBotResponse(text) {
+    let msg = {
+      _id: this.state.messages.length + 1,
+      text,
+      createdAt: new Date(),
+      user: BOT_USER
+    };
+
+    Tts.speak(text);
+
+    this.setState(previousState => ({
+      messages: GiftedChat.append(previousState.messages, [msg])
+    }));
+  }
 
   onSpeech = async () => {
     // begin listening
@@ -67,8 +97,16 @@ class App extends Component {
     try {
       await Voice.stop();
 
-      let str = this.state.lastInput;
-      await Dialogflow_V2.requestQuery(str.toString(), result=>{this.resultHandler(result)}, error=>console.error(error));
+      let text = this.state.lastInput;
+
+      let msg = {
+        _id: this.state.messages.length + 1,
+        text,
+        createdAt: new Date(),
+        user: USER
+      };
+
+      this.onSend([msg]);
     } catch (error) {
       console.error(error);
     }
@@ -80,36 +118,44 @@ class App extends Component {
     });
   };
 
-  render(){
+  renderComposer = (props) => {
+    
+    // Adds a Mic Button in the text box, you can style it as you want
     return (
-      <View 
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
+      <View style={{ flexDirection: 'row', width: '85%'}}>
+        <TouchableOpacity
+          width = '100%'
+          style={styles.button}
+          onPressIn={this.onSpeech}
+          onPressOut={this.onSpeechEnd}
+        >
+          <Icon name='mic-outline' size={24} alignItems='center'/>
+        </TouchableOpacity>        
+        <Composer {...props}/>
+      </View>      
+     )
+  }
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={this.onSpeech}
-        >
-          <Text>Press here to speak.</Text> 
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={this.onSpeechEnd}
-        >
-          <Text>Press here to get a response.</Text> 
-        </TouchableOpacity>
-      </View> 
-    )
-  };
+  render() {
+    return (
+      <View style={{flex: 1, backgroundColor: '#ffffff'}}>
+        <GiftedChat
+          renderComposer = {this.renderComposer}
+          messages={this.state.messages}
+          onSend={messages => this.onSend(messages)}
+          user={{
+            _id: 1
+          }}
+        />
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    backgroundColor: "#DDDDDD",
+    backgroundColor: "#ffffff",
     padding: 10
   }
 });
