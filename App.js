@@ -23,7 +23,7 @@ class App extends Component {
     messages: [
       {
         _id: 1,
-        text: `Hello I'm Jerry, your personal fitness assistant. Press and hold the microphone button below to get ask for workout suggestions!`,
+        text: `Hello I'm Jerry, your personal fitness assistant. Press and hold the microphone button below to ask for workout suggestions!`,
         createdAt: new Date(),
         user: BOT_USER
       }
